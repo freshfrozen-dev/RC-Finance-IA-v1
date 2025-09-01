@@ -5,7 +5,13 @@ sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..',
 
 import os
 import subprocess
-from loguru import logger
+
+try:
+    from loguru import logger  # ok se existir
+except Exception:  # fallback p/ ambientes sem loguru
+    import logging
+    logging.basicConfig(level=logging.INFO)
+    logger = logging.getLogger("rc-finance-ia")
 
 # Preferência: faster-whisper (CPU) com compute_type="int8" e modelo "small"
 try:

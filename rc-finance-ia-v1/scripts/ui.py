@@ -40,7 +40,8 @@ from scripts.utils.allocation import Goal, compute_scores, allocate, update_weig
 from scripts.utils.importers import parse_csv, parse_ofx
 from scripts.utils.ui_components import (
     show_skeleton_metric, show_skeleton_table,
-    show_banner, action_toast, with_progress, create_metric_card
+    show_banner, action_toast, with_progress, create_metric_card,
+    show_skeleton_chart,
 )
 # Paths com pathlib
 ROOT = Path(__file__).resolve().parent.parent.parent # RC-Finance-IA/
@@ -61,19 +62,16 @@ st.set_page_config(page_title="Dashboard", page_icon="📊", layout="wide")
 # Injeção do CSS
 st.markdown("<link rel='stylesheet' href='assets/styles.css'>", unsafe_allow_html=True)
 
-# Inicialização do estado de login (apenas uma vez)
-if 'logged_in' not in st.session_state:
-    st.session_state['logged_in'] = False
-
 # Gate de login
-if not st.session_state.get("logged_in"):
+if "logged_in" not in st.session_state:
+    st.session_state["logged_in"] = False
+if not st.session_state["logged_in"]:
     try:
-        st.switch_page("0_login")
+        st.switch_page("login")
     except Exception:
-        st.stop()
+        st.rerun()
+    st.stop()
 
-if st.session_state.get("__go_to") == "ui":
-    st.session_state.pop("__go_to", None)
 
 
 # --- Estilo ---
@@ -150,7 +148,7 @@ def render_dashboard():
         col2.empty()
         col3.empty()
         chart_placeholder.empty()
-        
+
         st.markdown('''
         <div class="empty-state">
             <h3>Sem dados financeiros</h3>
@@ -159,6 +157,11 @@ def render_dashboard():
         </div>
         ''', unsafe_allow_html=True)
         return
+
+    col1.empty()
+    col2.empty()
+    col3.empty()
+    chart_placeholder.empty()
 
     # Normaliza tipos de dados
     df["type"] = df["type"].astype(str)
@@ -175,35 +178,39 @@ def render_dashboard():
     # Métricas gerais
     income = df.loc[df["type"] == "income", "amount"].sum()
     expense = df.loc[df["type"] == "expense", "amount"].sum()
-    saldo = float(income - expense)
+    saldo_total = float(income - expense)
+    total_tx = len(df)
 
     f = lambda v: f"R$ {v:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
-    
-    # Exibe métricas com cards bancários
+
+    saldo_val = float(saldo_total)
+    st.markdown(
+        f"""
+        <div style="display:flex;gap:16px;flex-wrap:wrap">
+          <div style="background:linear-gradient(135deg,#1E2230 0%,#111522 60%);
+                      border-radius:16px;padding:20px 24px;color:#E6E9EF;min-width:320px;
+                      box-shadow:0 12px 32px rgba(0,0,0,.35);position:relative;overflow:hidden">
+            <div style="opacity:.22;position:absolute;right:-40px;top:-40px;width:220px;height:220px;
+                        border-radius:50%;background:radial-gradient(closest-side,#7C3AED,transparent)"></div>
+            <div style="font-size:.9rem;color:#9AA4B2">Saldo principal</div>
+            <div style="font-size:2rem;font-weight:700;letter-spacing:.3px;margin:4px 0 12px">R$ {saldo_val:,.2f}</div>
+            <div style="display:flex;justify-content:space-between;color:#9AA4B2">
+              <span>**** **** **** 5423</span>
+              <span>Vál. 12/27</span>
+            </div>
+          </div>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+    col1, col2, col3 = st.columns(3)
     with col1:
         create_metric_card("Receitas", f(income))
     with col2:
         create_metric_card("Despesas", f(expense))
     with col3:
-        st.markdown(
-            f"""
-            <div style="display:flex;gap:16px;flex-wrap:wrap">
-              <div style="background:linear-gradient(135deg,#1E2230 0%,#111522 60%);
-                          border-radius:16px;padding:20px 24px;color:#E6E9EF;min-width:320px;
-                          box-shadow:0 12px 32px rgba(0,0,0,.35);position:relative;overflow:hidden">
-                <div style="opacity:.22;position:absolute;right:-40px;top:-40px;width:220px;height:220px;
-                            border-radius:50%;background:radial-gradient(closest-side,#7C3AED,transparent)"></div>
-                <div style="font-size:.9rem;color:#9AA4B2">Saldo principal</div>
-                <div style="font-size:2rem;font-weight:700;letter-spacing:.3px;margin:4px 0 12px">R$ {saldo:,.2f}</div>
-                <div style="display:flex;justify-content:space-between;color:#9AA4B2">
-                  <span>**** **** **** 5423</span>
-                  <span>Vál. 12/27</span>
-                </div>
-              </div>
-            </div>
-            """,
-            unsafe_allow_html=True,
-        )
+        create_metric_card("Transações", f"{total_tx}")
 
 
     st.markdown('<div class="divider"></div>', unsafe_allow_html=True)
@@ -544,26 +551,32 @@ if st.session_state.get("logged_in"):
     st.sidebar.markdown(f"**Usuário:** {user_name}")
     st.sidebar.divider()
 
-# Mapeamento de páginas para funções de renderização
+# Definição das páginas
 pages = {
     "Dashboard": render_dashboard,
     "Transações": render_transactions,
-    "Relatórios Simples": st.Page("pages/2_reports_simple.py", title="Relatórios Simples", icon="Dashboard"),
-    "Importar Transações": st.Page("pages/3_import_transactions.py", title="Importar Transações", icon="📥"),
-    "Metas": render_goals,
-    "Voz": render_voice,
+    "Relatórios": st.Page("pages/1_reports.py", title="Relatórios", icon="📈"),
+    "Relatórios Simples": st.Page("pages/2_reports_simple.py", title="Relatórios Simples", icon="📄"),
+    "Importar Transações": st.Page("pages/3_import_transactions.py", title="Importar Transações", icon="⬆️"),
+    "Metas": st.Page("pages/4_goals.py", title="Metas", icon="🎯"),
 }
 
-# Adiciona a página de login separadamente, pois ela não requer login prévio
-login_page = st.Page("pages/0_login.py", title="Login", icon="🔑")
+login_page = st.Page("pages/0_login.py", title="Login", icon="🔑", url_path="login")
+voz_page = st.Page("pages/3_voz.py", title="Comandos de Voz", icon="🎤", url_path="voz")
 
-# Se não estiver logado, mostra apenas a página de login
-if not st.session_state.get("logged_in"):
-    login_page.run()
-else:
-    # Se logado, mostra as outras páginas
-    pg = st.navigation([login_page] + list(pages.values()))
-    pg.run()
+# Oculta login e voz da navegação
+st.markdown(
+    """
+    <style>
+    [data-testid="stSidebarNav"] a[href="/login"],
+    [data-testid="stSidebarNav"] a[href="/voz"]{display:none}
+    </style>
+    """,
+    unsafe_allow_html=True,
+)
+
+pg = st.navigation([login_page, voz_page] + list(pages.values()))
+pg.run()
 
 
 

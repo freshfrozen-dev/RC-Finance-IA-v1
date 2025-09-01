@@ -13,13 +13,22 @@ from scripts.utils.importers import parse_csv, parse_ofx
 from scripts.utils.ui_components import action_toast
 
 def import_transactions_page():
-    st.set_page_config(layout="wide")
-    st.title("Importar Transações")
+    st.set_page_config(page_title="Importar Transações", page_icon="⬆️", layout="wide")
 
-    # Gate: verificar se o usuário está logado
-    if 'user_id' not in st.session_state:
-        st.warning("Por favor, faça login para acessar esta página.")
+    # Gate de login
+    if "logged_in" not in st.session_state:
+        st.session_state["logged_in"] = False
+    if not st.session_state["logged_in"]:
+        try:
+            st.switch_page("login")
+        except Exception:
+            st.rerun()
         st.stop()
+
+    # Injeção do CSS
+    st.markdown("<link rel='stylesheet' href='assets/styles.css'>", unsafe_allow_html=True)
+
+    st.title("Importar Transações")
 
     user_id = st.session_state['user_id']
 
@@ -60,15 +69,32 @@ def import_transactions_page():
             st.subheader("Prévia das Transações")
             st.dataframe(transactions_to_insert)
 
-            if st.button("Confirmar Importação"):                
-                result = bulk_insert_transactions(user_id, transactions_to_insert)
-                st.success(f"Importação concluída! Inseridas: {result['inserted']}, Duplicadas: {result['duplicates']}, Falhas: {result['failed']}")
-                action_toast("success", "Importação realizada com sucesso!")
+            if st.button("Confirmar Importação"):
+                try:
+                    with st.spinner("Importando transações..."):
+                        result = bulk_insert_transactions(user_id, transactions_to_insert)
+                    st.success(
+                        f"Importação concluída! Inseridas: {result['inserted']}, Duplicadas: {result['duplicates']}, Falhas: {result['failed']}"
+                    )
+                    st.toast("Importação realizada com sucesso!", icon="✅")
+                except Exception as e:
+                    st.error(f"Erro ao importar transações: {e}")
         elif uploaded_file.type != "text/csv" and uploaded_file.type != "application/x-ofx":
             st.error("Nenhuma transação válida encontrada no arquivo ou formato não suportado.")
 
-# Se este script for executado diretamente (para testes ou como página principal)
-if __name__ == "__main__":
-    import_transactions_page()
+import_transactions_page()
 
+st.markdown(
+    """
+    <style>
+      .rc-mic{position:fixed;right:24px;bottom:24px;z-index:1000}
+      .rc-mic>a{display:inline-flex;align-items:center;justify-content:center;
+        width:56px;height:56px;border-radius:50%;background:#7C3AED;color:#fff;
+        box-shadow:0 8px 24px rgba(0,0,0,.35);text-decoration:none;font-size:24px}
+      .rc-mic>a:hover{filter:brightness(1.08)}
+    </style>
+    <div class=\"rc-mic\"><a href=\"/voz\" target=\"_self\" title=\"Comandos de Voz\">🎤</a></div>
+    """,
+    unsafe_allow_html=True,
+)
 

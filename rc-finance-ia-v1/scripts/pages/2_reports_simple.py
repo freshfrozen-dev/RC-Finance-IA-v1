@@ -136,7 +136,7 @@ def reports_simple_page():
                 show_banner("info", "Gerando arquivo CSV...")
                 csv_filename, csv_bytes, csv_mime = with_progress("Gerando CSV...", export_csv)
                 st.download_button(
-                    label="Download CSV",
+                    label="Baixar CSV",
                     data=csv_bytes,
                     file_name=csv_filename,
                     mime=csv_mime,
@@ -149,7 +149,7 @@ def reports_simple_page():
                 show_banner("info", "Gerando arquivo Excel...")
                 excel_filename, excel_bytes, excel_mime = with_progress("Gerando Excel...", export_excel)
                 st.download_button(
-                    label="Download Excel",
+                    label="Baixar Excel",
                     data=excel_bytes,
                     file_name=excel_filename,
                     mime=excel_mime,
@@ -158,8 +158,7 @@ def reports_simple_page():
                 action_toast("success", "Arquivo Excel pronto para download!")
 
 # Se este script for executado diretamente (para testes ou como página principal)
-if __name__ == "__main__":
-    reports_simple_page()
+reports_simple_page()
 
 
 
