@@ -1,0 +1,20 @@
+{
+  "name": "contas",
+  "filters": {
+    "date_range": [
+      "2025-07-20",
+      "2025-08-19"
+    ],
+    "categories": [
+      "Todas"
+    ],
+    "accounts": [
+      "Todas"
+    ],
+    "transaction_types": [
+      "Todos"
+    ],
+    "user_filter": "Todos"
+  },
+  "created_at": "2025-08-19"
+}
