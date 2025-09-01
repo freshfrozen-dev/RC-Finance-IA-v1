@@ -1,0 +1,16 @@
+# Python/Streamlit hygiene
+__pycache__/
+*.pyc
+.pytest_cache/
+.mypy_cache/
+.coverage
+.env
+.venv/
+venv/
+.DS_Store
+.idea/
+.vscode/
+dist/
+build/
+# Streamlit secrets (se houver)
+.streamlit/secrets.toml
