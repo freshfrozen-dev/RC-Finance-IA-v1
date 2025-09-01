@@ -61,9 +61,13 @@ st.set_page_config(page_title="Login", page_icon="🔑", initial_sidebar_state="
 # Injeção do CSS
 st.markdown("<link rel='stylesheet' href='assets/styles.css'>", unsafe_allow_html=True)
 
-# Se já logado, redirecionar para UI
+# Se já logado, redireciona para o painel
 if st.session_state.get("logged_in"):
-    st.switch_page("ui.py")
+    try:
+        st.switch_page("ui")
+    except Exception:
+        st.rerun()
+    st.stop()
 
 ROOT = Path(__file__).resolve().parents[1]   # scripts/
 DB_PATH = (ROOT.parent / "data" / "finance.db").resolve()
@@ -102,7 +106,7 @@ with st.form("login_form"):
                 con.row_factory = sqlite3.Row
                 user = authenticate_user(con, email, senha)
                 con.close()
-                
+
                 row = user
                 if not row:
                     st.error("Email ou senha inválidos.")
@@ -111,11 +115,14 @@ with st.form("login_form"):
 
                 st.session_state.update({
                     "logged_in": True,
-                    "user_id": user["id"],
-                    "user_name": user.get("name") or user.get("nome") or "Usuário",
-                    "role": user.get("role", "member")
+                    "user_id": user.get("id") if isinstance(user, dict) else user[0],
+                    "user_name": (user.get("name") if isinstance(user, dict) else None) or "Admin",
+                    "role": (user.get("role") if isinstance(user, dict) else None) or "member",
                 })
-                st.switch_page("ui.py")
+                try:
+                    st.switch_page("ui")
+                except Exception:
+                    st.rerun()
 
         except Exception as e:
             st.error(f"Erro ao fazer login: {e}")

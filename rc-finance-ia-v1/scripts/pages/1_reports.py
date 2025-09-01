@@ -10,20 +10,14 @@ import plotly.express as px
 import plotly.graph_objects as go
 
 ROOT = Path(__file__).resolve().parent
+TEMPLATES_DIR = ROOT.parent / "reports" / "templates"
+TEMPLATES_DIR.mkdir(parents=True, exist_ok=True)
 
-def render():
-    """Renderiza a página de relatórios dinâmicos"""
+st.set_page_config(page_title="Relatórios", page_icon="📈")
+st.markdown("<link rel='stylesheet' href='assets/styles.css'>", unsafe_allow_html=True)
 
-    # Criar diretório para templates se não existir
-    TEMPLATES_DIR = ROOT.parent / "reports" / "templates"  # ajusta conforme seu projeto
-    TEMPLATES_DIR.mkdir(parents=True, exist_ok=True)
-
-    st.set_page_config(page_title="Relatórios", page_icon="📈")
-
-# Gate de login
 if "logged_in" not in st.session_state:
     st.session_state["logged_in"] = False
-
 if not st.session_state["logged_in"]:
     try:
         st.switch_page("login")
@@ -32,7 +26,7 @@ if not st.session_state["logged_in"]:
     st.stop()
 
 st.title("Relatórios Dinâmicos")
-    st.markdown("Gere relatórios personalizados com filtros avançados e visualizações.")
+st.markdown("Gere relatórios personalizados com filtros avançados e visualizações.")
 
     # Filtros na sidebar
     st.sidebar.header("Filtros do Relatório")
@@ -171,7 +165,7 @@ st.title("Relatórios Dinâmicos")
                 csv_data = export_to_csv(df_filtered)
                 if csv_data:
                     st.download_button(
-                        label="⬇️ Download CSV",
+                        label="⬇️ Baixar CSV",
                         data=csv_data,
                         file_name=f"relatorio_{date.today().strftime('%Y%m%d')}.csv",
                         mime="text/csv",
@@ -183,7 +177,7 @@ st.title("Relatórios Dinâmicos")
                 excel_data = export_to_excel(df_filtered)
                 if excel_data:
                     st.download_button(
-                        label="⬇️ Download Excel",
+                        label="⬇️ Baixar Excel",
                         data=excel_data,
                         file_name=f"relatorio_{date.today().strftime('%Y%m%d')}.xlsx",
                         mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
